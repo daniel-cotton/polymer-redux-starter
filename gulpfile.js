@@ -142,7 +142,7 @@ gulp.task('serve', ['copy-temp'], () => {
             middleware: [ historyApiFallback() ]
         }
     });
-    gulp.watch('./src/**/*').on('change', function () {
+    gulp.watch(['./src/**/*', './bower_components/**/*']).on('change', function () {
         console.log("File-Changed, Updating.");
         gulp.waitFor(mergeStream(gulp.buildSources(gulp.src(['src/**/*.{js,html}', '!bower_components/**/*'], {base: '.'})), project.dependencies())
             .pipe(gulp.dest(SERVE_DIR))) // Pipe into build directory.
