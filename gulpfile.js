@@ -143,10 +143,14 @@ gulp.task('serve', ['copy-temp'], () => {
             middleware: [ historyApiFallback() ]
         }
     });
-    gulp.watch('./src/**/*', ['copy-temp']).on('change', function () {
+    gulp.watch('./src/**/*').on('change', function () {
         console.log("File-Changed, Updating.");
-        return mergeStream(gulp.buildSources(project.sources()), project.dependencies())
-            .pipe(gulp.dest('updated/')); // Pipe into build directory.
+        gulp.waitFor(mergeStream(gulp.buildSources(gulp.src(['src/**/*.{js,html}', '!bower_components/**/*'], {base: '.'})), project.dependencies())
+            .pipe(gulp.dest(SERVE_DIR)))
+            .then(() => {
+                console.log("Complete");
+            }); // Pipe into build directory.
+
     });
 });
 
