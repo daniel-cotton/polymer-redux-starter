@@ -6,5 +6,11 @@
     /* eslint no-unused-vars: "off" */
     /* global Redux, reducers, PolymerRedux */
     var store = Redux.createStore(reducers);
-    var ReduxBehavior = PolymerRedux(store);
+    /**
+     * Behavior providing redux state access.
+     *
+     * @polymerBehavior
+     */
+    var ReduxBehavior = {};
+    ReduxBehavior = PolymerRedux(store);
 </script>

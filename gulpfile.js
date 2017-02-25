@@ -44,6 +44,13 @@ var project = new PolymerProject(require('./polymer.json'));
     Build Functions
  */
 
+gulp.waitFor = stream => {
+    return new Promise((resolve, reject) => {
+        stream.on('end', resolve);
+        stream.on('error', reject);
+    });
+};
+
 gulp.spawnCmd = command => {
     if (isWin){
         return command + ".cmd";
@@ -64,7 +71,7 @@ gulp.copyBase = (src, dest, base) => {
 gulp.createServiceWorker = (project, swPreCache, bundled) => {
     return addServiceWorker({
         project: project,
-        buildRoot: 'production-build/',
+        buildRoot: BUILD_DIR,
         swPrecacheConfig: swPreCache,
         bundled: bundled
     });
@@ -73,15 +80,16 @@ gulp.createServiceWorker = (project, swPreCache, bundled) => {
 gulp.buildSources = sources => {
     return sources
         .pipe(sourcesHtmlSplitter.split()) // split streams
-        .pipe(sourcemaps.init())
+        .pipe(sourcemaps.init()) // Start preparing sourcemaps
         .pipe(gulpif('*.js', babel({
             presets: ['es2015']
-        })))
-        .pipe(sourcemaps.write())
+        }))) // Babel transpiling
+        .pipe(sourcemaps.write()) // Write those sourcemaps!
         .pipe(sourcesHtmlSplitter.rejoin());
 };
 
 gulp.getBuildStreams = () => {
+    //  Build our build sources & import our dependencies. Then merge the streams.
     var stream = mergeStream(gulp.buildSources(project.sources()), project.dependencies());
     // Build bundled, if --bundled
     return stream.pipe(gulpif(argv.bundled, project.bundler));
@@ -131,6 +139,7 @@ gulp.task('clean', () => {
 gulp.task('serve', ['copy-temp'], onComplete => {
     spawn(gulp.spawnCmd('polymer'), ['serve', '--open', '.'], { cwd: '.tmp/', stdio: 'inherit' })
         .on('close', function (){
+            onComplete();
         }).on('error', function (error) {
         onComplete(error);
     });
@@ -149,7 +158,7 @@ gulp.task('build', [], onComplete => {
     // Pipe into build directory.
     stream = stream.pipe(gulp.dest(BUILD_DIR));
     // Once outputted into dist.
-    waitFor(stream).then(() => {
+    gulp.waitFor(stream).then(() => {
         // generate a service worker!
         gulp.createServiceWorker(project, swPreCache, argv.bundled).then(() => {
             console.log("Build Complete!");
