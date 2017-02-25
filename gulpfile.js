@@ -24,6 +24,12 @@ var mergeStream = require('merge-stream');
 var sourcemaps = require('gulp-sourcemaps');
 var babel = require('gulp-babel');
 
+/*
+    Serve Dependencies
+ */
+
+var historyApiFallback = require('connect-history-api-fallback')
+var browserSync = require('browser-sync');
 
 /*
     Polymer Tool Construction
@@ -99,26 +105,14 @@ gulp.getBuildStreams = () => {
     Shared Tasks
  */
 
-gulp.task('transpile-es2015', [], () => {
-    return gulp.buildSources(project.sources())
-        .pipe(gulp.dest('.tmp/src'));
-});
-
-gulp.task('copy-temp', ['transpile-es2015'], () => {
-    gulp.copy('test/**/*', '.tmp');
-    gulp.copy('bower_components/**/*', '.tmp');
-    gulp.copy('node_modules/**/*', '.tmp');
-    gulp.copy('index.html', '.tmp');
-    gulp.copy('bower.json', '.tmp');
-    gulp.copy('package.json', '.tmp');
-    gulp.copy('polymer.json', '.tmp');
-    gulp.copy('manifest.json', '.tmp');
-    gulp.copy('service-worker.js', '.tmp');
-    gulp.copy('sw-precache-config.js', '.tmp');
-    gulp.copy('images/**/*', '.tmp');
+gulp.task('copy-temp', () => {
+    // Merge the streams
+    return mergeStream(gulp.buildSources(project.sources()), project.dependencies())
+    .pipe(gulp.dest(SERVE_DIR)); // Pipe into build directory.
 });
 
 gulp.task('test-exec', ['copy-temp'], onComplete => {
+    gulp.copy('test/**/*', '.tmp');
     spawn(gulp.spawnCmd('polymer'), ['test'], { cwd: '.tmp/', stdio: 'inherit' })
         .on('close', () => {
             onComplete(null);
@@ -136,20 +130,25 @@ gulp.task('clean', () => {
     del(['dist/']);
 });
 
-gulp.task('serve', ['copy-temp'], onComplete => {
-    spawn(gulp.spawnCmd('polymer'), ['serve', '--open', '.'], { cwd: '.tmp/', stdio: 'inherit' })
-        .on('close', function (){
-            onComplete();
-        }).on('error', function (error) {
-        onComplete(error);
-    });
-    gulp.watch('src/**/*', ['copy-temp']);
-});
-
 
 /*
      Executable 'Complete' Tasks
  */
+gulp.task('serve', ['copy-temp'], () => {
+
+    browserSync({
+        files: [".tmp/**/*"],
+        server: {
+            baseDir: ".tmp/",
+            middleware: [ historyApiFallback() ]
+        }
+    });
+    gulp.watch('./src/**/*', ['copy-temp']).on('change', function () {
+        console.log("File-Changed, Updating.");
+        return mergeStream(gulp.buildSources(project.sources()), project.dependencies())
+            .pipe(gulp.dest('updated/')); // Pipe into build directory.
+    });
+});
 
 gulp.task('build', [], onComplete => {
     console.log("Beginning Production Build");
