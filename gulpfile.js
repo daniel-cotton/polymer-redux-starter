@@ -1,16 +1,50 @@
 /* eslint-disable */
 
+/*
+    Constants
+ */
+
+const BUILD_DIR = 'dist/';
+const SERVE_DIR = '.tmp/';
+
+/*
+    Core Dependencies
+ */
 var gulp = require('gulp');
 var spawn = require('child_process').spawn;
 var del = require('del');
-var crisper = require('gulp-crisper');
 var gulpif = require('gulp-if');
+var argv = require('yargs').argv;
+
+/*
+    Build Dependencies
+ */
+var polymerBuild = require('polymer-build');
+var mergeStream = require('merge-stream');
 var sourcemaps = require('gulp-sourcemaps');
 var babel = require('gulp-babel');
 
-var isWin = /^win/.test(process.platform);
 
-gulp.spawnCmd = function (command) {
+/*
+    Polymer Tool Construction
+ */
+var PolymerProject = polymerBuild.PolymerProject;
+var HtmlSplitter = polymerBuild.HtmlSplitter;
+var addServiceWorker = polymerBuild.addServiceWorker;
+var sourcesHtmlSplitter = new HtmlSplitter();
+
+/*
+    Config
+ */
+
+var swPreCache = require('./sw-precache-config.js');
+var project = new PolymerProject(require('./polymer.json'));
+
+/*
+    Build Functions
+ */
+
+gulp.spawnCmd = command => {
     if (isWin){
         return command + ".cmd";
     } else {
@@ -18,31 +52,51 @@ gulp.spawnCmd = function (command) {
     }
 };
 
-gulp.copy = function(src, dest){
+gulp.copy = (src, dest) => {
     return gulp.src(src, {base:"."})
         .pipe(gulp.dest(dest));
 };
-gulp.copyBase = function(src, dest, base){
+gulp.copyBase = (src, dest, base) => {
     return gulp.src(src, {base: base})
         .pipe(gulp.dest(dest));
 };
 
-gulp.task('transpile-es2015', [], function () {
-    return gulp.src(['src/**/*.{js,html}', '!bower_components/**/*'])
-        .pipe(gulpif('*.html', crisper({scriptInHead:false}))) // Extract JS from .html files
+gulp.createServiceWorker = (project, swPreCache, bundled) => {
+    return addServiceWorker({
+        project: project,
+        buildRoot: 'production-build/',
+        swPrecacheConfig: swPreCache,
+        bundled: bundled
+    });
+};
+
+gulp.buildSources = sources => {
+    return sources
+        .pipe(sourcesHtmlSplitter.split()) // split streams
         .pipe(sourcemaps.init())
         .pipe(gulpif('*.js', babel({
             presets: ['es2015']
         })))
         .pipe(sourcemaps.write())
+        .pipe(sourcesHtmlSplitter.rejoin());
+};
+
+gulp.getBuildStreams = () => {
+    var stream = mergeStream(gulp.buildSources(project.sources()), project.dependencies());
+    // Build bundled, if --bundled
+    return stream.pipe(gulpif(argv.bundled, project.bundler));
+};
+
+/*
+    Shared Tasks
+ */
+
+gulp.task('transpile-es2015', [], () => {
+    return gulp.buildSources(project.sources())
         .pipe(gulp.dest('.tmp/src'));
 });
 
-/*
-    Define build stages
- */
-
-gulp.task('copy-temp', ['transpile-es2015'], function () {
+gulp.task('copy-temp', ['transpile-es2015'], () => {
     gulp.copy('test/**/*', '.tmp');
     gulp.copy('bower_components/**/*', '.tmp');
     gulp.copy('node_modules/**/*', '.tmp');
@@ -56,25 +110,25 @@ gulp.task('copy-temp', ['transpile-es2015'], function () {
     gulp.copy('images/**/*', '.tmp');
 });
 
-gulp.task('test-exec', ['copy-temp'], function (onComplete) {
+gulp.task('test-exec', ['copy-temp'], onComplete => {
     spawn(gulp.spawnCmd('polymer'), ['test'], { cwd: '.tmp/', stdio: 'inherit' })
-        .on('close', function (){
+        .on('close', () => {
             onComplete(null);
-        }).on('error', function (error) {
+        }).on('error', error => {
             onComplete(error);
         });
 });
 
-gulp.task('test', ['test-exec'], function () {
+gulp.task('test', ['test-exec'], () => {
     del(['.tmp/']);
 });
 
-gulp.task('clean', function () {
+gulp.task('clean', () => {
     del(['.tmp/']);
     del(['dist/']);
 });
 
-gulp.task('serve', ['copy-temp'], function (onComplete) {
+gulp.task('serve', ['copy-temp'], onComplete => {
     spawn(gulp.spawnCmd('polymer'), ['serve', '--open', '.'], { cwd: '.tmp/', stdio: 'inherit' })
         .on('close', function (){
         }).on('error', function (error) {
@@ -84,16 +138,22 @@ gulp.task('serve', ['copy-temp'], function (onComplete) {
 });
 
 
-gulp.task('build', ['copy-temp'], function (onComplete) {
-    setTimeout(function () {
-        spawn(gulp.spawnCmd('polymer'), ['build'], { cwd: '.tmp/', stdio: 'inherit' })
-            .on('close', function (){
-                gulp.copyBase('.tmp/build/**/*', 'dist', '.tmp/build');
-                gulp.copyBase('.tmp/package.json', 'dist/bundled', '.tmp');
-                gulp.copyBase('.tmp/package.json', 'dist/unbundled', '.tmp');
-                onComplete();
-            }).on('error', function (error) {
-            onComplete("ERROR");
+/*
+     Executable 'Complete' Tasks
+ */
+
+gulp.task('build', [], onComplete => {
+    console.log("Beginning Production Build");
+    // Merge the streams
+    var stream = gulp.getBuildStreams();
+    // Pipe into build directory.
+    stream = stream.pipe(gulp.dest(BUILD_DIR));
+    // Once outputted into dist.
+    waitFor(stream).then(() => {
+        // generate a service worker!
+        gulp.createServiceWorker(project, swPreCache, argv.bundled).then(() => {
+            console.log("Build Complete!");
+            onComplete();
         });
-    }, 1000);
+    });
 });
