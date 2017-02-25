@@ -46,6 +46,8 @@ var sourcesHtmlSplitter = new HtmlSplitter();
 var swPreCache = require('./sw-precache-config.js');
 var project = new PolymerProject(require('./polymer.json'));
 
+var isWin = /^win/.test(process.platform);
+
 /*
     Build Functions
  */
