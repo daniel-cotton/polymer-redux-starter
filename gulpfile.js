@@ -135,7 +135,6 @@ gulp.task('clean', () => {
      Executable 'Complete' Tasks
  */
 gulp.task('serve', ['copy-temp'], () => {
-
     browserSync({
         files: [".tmp/**/*"],
         server: {
@@ -146,11 +145,10 @@ gulp.task('serve', ['copy-temp'], () => {
     gulp.watch('./src/**/*').on('change', function () {
         console.log("File-Changed, Updating.");
         gulp.waitFor(mergeStream(gulp.buildSources(gulp.src(['src/**/*.{js,html}', '!bower_components/**/*'], {base: '.'})), project.dependencies())
-            .pipe(gulp.dest(SERVE_DIR)))
+            .pipe(gulp.dest(SERVE_DIR))) // Pipe into build directory.
             .then(() => {
-                console.log("Complete");
-            }); // Pipe into build directory.
-
+                console.log("Updated.");
+            });
     });
 });
 
