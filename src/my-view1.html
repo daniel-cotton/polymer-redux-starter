@@ -7,49 +7,68 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
-
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="./store/redux-store.html">
 <link rel="import" href="./shared-styles.html">
 
 <dom-module id="my-view1">
   <template>
-    <style include="shared-styles">
-      :host {
-        display: block;
+    <custom-style>
+      <style include="shared-styles">
+          html {
+            display: block;
 
-        padding: 10px;
-      }
-    </style>
+            padding: 10px;
+          }
+        </style>
+    </custom-style>
 
     <div class="card">
       <div class="circle">1</div>
       <h1>View One</h1>
       <p>Count: [[count]]</p>
-      <button on-tap="_increment">Increment</button>
+      <button on-click="_increment">Increment</button>
     </div>
   </template>
 
   <script>
     /* global ReduxBehavior */
-    Polymer({
-      is: 'my-view1',
-      behaviors: [ReduxBehavior],
-      actions: {
-        increment: function() {
-          return {
-            type: 'INCREMENT_COUNT',
-          };
-        },
-      },
-      properties: {
-        count: {
-          type: Number,
-          statePath: 'count',
-        },
-      },
-      _increment: function() {
+
+    var ReduxElement = ReduxMixin(Polymer.Element);
+
+    class MyView1 extends ReduxElement {
+
+      static get is() {
+        return 'my-view1';
+      }
+
+      static get config() {
+        return {
+          actions: {
+            increment: function() {
+              return {
+                type: 'INCREMENT_COUNT'
+              };
+            }
+          },
+          properties: {
+            count: {
+              type: Number,
+              statePath: 'count'
+            }
+          }
+        }
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        console.log(this);
+      }
+      _increment() {
+        console.log("YAY");
         this.dispatch('increment');
-      },
-    });
+      }
+
+    }
+    customElements.define(MyView1.is, MyView1);
   </script>
 </dom-module>
