@@ -12,13 +12,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="my-view404">
   <template>
-    <style>
-      :host {
-        display: block;
+    <custom-style>
+      <style include="shared-styles">
+        html {
+          display: block;
 
-        padding: 10px 20px;
-      }
-    </style>
+          padding: 10px;
+        }
+      </style>
+    </custom-style>
 
     <!-- 
       If deploying in a folder replace href="/" with the full path to your site.
@@ -28,8 +30,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script>
-    Polymer({
-      is: 'my-view404',
-    });
+    class MyView404 extends Polymer.Element {
+      static get is() {
+        return 'my-view404'
+      }
+    }
+    customElements.define(MyView404.is, MyView404);
   </script>
 </dom-module>
