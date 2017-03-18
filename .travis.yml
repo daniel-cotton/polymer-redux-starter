@@ -8,11 +8,10 @@ addons:
       - google-chrome
     packages:
       - google-chrome-stable
-notifications:
-  email: false
 node_js:
   - '6'
   - '5'
+  - '4'
 before_script:
   - npm install -g bower polymer-cli
   - bower install

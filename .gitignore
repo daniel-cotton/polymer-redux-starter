@@ -1,7 +1,13 @@
+# Bower Dependencies
 bower_components/
-build/
+
+# Node
 node_modules/
-.idea/*
 npm-debug.log
-.tmp/*
-dist/*
+
+# Jetbrains
+.idea
+
+# Build directory
+.tmp
+build/

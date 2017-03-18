@@ -8,21 +8,19 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
 
 <dom-module id="my-view404">
   <template>
-    <custom-style>
-      <style include="shared-styles">
-        html {
-          display: block;
+    <style>
+      :host {
+        display: block;
 
-          padding: 10px;
-        }
-      </style>
-    </custom-style>
+        padding: 10px 20px;
+      }
+    </style>
 
-    <!-- 
+    <!--
       If deploying in a folder replace href="/" with the full path to your site.
       Such as: href=="http://polymerelements.github.io/polymer-starter-kit"
     -->
@@ -31,10 +29,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <script>
     class MyView404 extends Polymer.Element {
-      static get is() {
-        return 'my-view404'
-      }
+      static get is() { return 'my-view404'; }
     }
-    customElements.define(MyView404.is, MyView404);
+
+    window.customElements.define(MyView404.is, MyView404);
   </script>
 </dom-module>

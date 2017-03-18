@@ -1,0 +1,13 @@
+<link rel="import" href="../../bower_components/polymer-redux/polymer-redux.html">
+<script src="../reducers/redux-reducers.js"></script>
+<script>
+    /* eslint new-cap: "off" */
+    /* eslint no-unused-vars: "off" */
+    /* global Redux, reducers, PolymerRedux */
+    var store = Redux.createStore(reducers,
+    window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());
+    let ReduxMixin = PolymerRedux(store);
+    const PolyRedux = {
+      Element: ReduxMixin(Polymer.Element)
+    };
+</script>

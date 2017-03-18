@@ -7,67 +7,60 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
+
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="./store/redux-store.html">
-<link rel="import" href="./shared-styles.html">
+<link rel="import" href="./store/redux-mixin.html">
+<link rel="import" href="shared-styles.html">
 
 <dom-module id="my-view2">
   <template>
-    <custom-style>
-      <style include="shared-styles">
-        html {
-          display: block;
+    <style include="shared-styles">
+      :host {
+        display: block;
 
-          padding: 10px;
-        }
-      </style>
-    </custom-style>
+        padding: 10px;
+      }
+    </style>
 
     <div class="card">
-      <div class="circle">2</div>
-      <h1>View 2</h1>
-      <p>You can also increment the count here. Look at the running count: [[count]]</p>
+      <div class="circle">[[count]]</div>
+      <h1>View Two</h1>
+      <p>Count: [[count]].</p>
+      <p>Id nam odio natum malorum, tibique copiosae expetenda mel ea.Detracto suavitate repudiandae no eum. Id adhuc minim soluta nam.Id nam odio natum malorum, tibique copiosae expetenda mel ea.</p>
       <button on-click="_increment">Increment</button>
     </div>
   </template>
 
   <script>
-    /* global ReduxBehavior */
-
-    var ReduxElement = ReduxMixin(Polymer.Element);
-
-    class MyView2 extends ReduxElement {
-
+    class MyView2 extends PolyRedux.Element {
       static get is() {
         return 'my-view2';
       }
-
-      static get config() {
+      static get actions() {
         return {
-          actions: {
-            increment: function() {
-              return {
-                type: 'INCREMENT_COUNT'
-              };
-            }
-          },
-          properties: {
-            count: {
-              type: Number,
-              statePath: 'count'
-            }
+          increment: function() {
+            return {
+              type: 'INCREMENT_COUNT'
+            };
+          }
+        }
+      }
+      static get properties() {
+        return {
+          count: {
+            type: Number,
+            statePath: 'count'
           }
         }
       }
       connectedCallback() {
         super.connectedCallback();
-        console.log(this);
       }
       _increment() {
         this.dispatch('increment');
       }
-
     }
-    customElements.define(MyView2.is, MyView2);
+
+    window.customElements.define(MyView2.is, MyView2);
   </script>
 </dom-module>
