@@ -108,6 +108,8 @@ gulp.getBuildStreams = () => {
  */
 
 gulp.task('copy-temp', () => {
+    gulp.copy('test/**/*', '.tmp');
+    gulp.copy('bower_components/**/*', '.tmp');
     // Merge the streams
     return mergeStream(gulp.buildSources(project.sources()), project.dependencies())
     .pipe(gulp.dest(SERVE_DIR)); // Pipe into build directory.
