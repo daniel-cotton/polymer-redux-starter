@@ -151,6 +151,7 @@ gulp.task('serve', ['copy-temp'], () => {
         gulp.waitFor(mergeStream(gulp.buildSources(gulp.src(['src/**/*.{js,html}', '!bower_components/**/*'], {base: '.'})), project.dependencies())
             .pipe(gulp.dest(SERVE_DIR))) // Pipe into build directory.
             .then(() => {
+                gulp.copy('bower_components/**/*', '.tmp');
                 console.log("Updated.");
             });
     });
