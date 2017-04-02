@@ -5,7 +5,7 @@
  */
 
 const BUILD_DIR = 'dist/';
-
+const SERVE_DIR = '.tmp/';
 /*
     Core Dependencies
  */
@@ -27,7 +27,7 @@ var babel = require('gulp-babel');
     Serve Dependencies
  */
 
-var historyApiFallback = require('connect-history-api-fallback')
+var historyApiFallback = require('connect-history-api-fallback');
 var browserSync = require('browser-sync');
 
 /*
@@ -140,7 +140,7 @@ gulp.task('clean', function () {
  */
 gulp.task('serve', function () {
     browserSync({
-        files: ["/**/*"],
+        files: ["./**/*"],
         server: {
             baseDir: ".",
             middleware: [ historyApiFallback() ]
