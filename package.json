@@ -17,11 +17,12 @@
     "gulp-sourcemaps": "^2.4.0",
     "merge-stream": "^1.0.1",
     "polymer-build": "^0.8.2",
+    "web-component-tester": "^5.0.1",
     "yargs": "^6.6.0"
   },
   "scripts": {
     "lint": "eslint . --ext js,html --ignore-path .gitignore",
-    "test": "npm run lint && gulp clean && gulp test",
+    "test": "npm run lint && gulp clean && gulp test:local",
     "start": "gulp serve",
     "clean": "gulp clean",
     "build": "npm run clean && gulp build --bundled",
