@@ -22,9 +22,10 @@
   "scripts": {
     "lint": "eslint . --ext js,html --ignore-path .gitignore",
     "test": "npm run lint && gulp clean && gulp test",
-    "start": "gulp clean && gulp serve",
+    "start": "gulp serve",
     "clean": "gulp clean",
-    "build": "npm run clean && gulp build"
+    "build": "npm run clean && gulp build --bundled",
+    "build:unbundled": "npm run clean && gulp build"
   },
   "dependencies": {
     "redux": "^3.6.0"
