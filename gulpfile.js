@@ -54,7 +54,9 @@ var isWin = /^win/.test(process.platform);
 gulp.waitFor = function (stream) {
     return new Promise(function (resolve, reject) {
         stream.on('end', resolve);
-        stream.on('error', reject);
+        stream.on('error', function (error) {
+            reject(new Error(error));
+        });
     });
 };
 
@@ -99,8 +101,13 @@ gulp.getBuildStreams = function () {
     //  Build our build sources & import our dependencies. Then merge the streams.
     var stream = mergeStream(gulp.buildSources(project.sources()), project.dependencies());
     // Build bundled, if --bundled
-    console.log('Bundling');
-    return stream.pipe(gulpif(argv.bundled, project.bundler));
+    if (argv.bundled) {
+        console.log('[BUILD] Bundling');
+        return stream.pipe(project.bundler);
+    } else {
+        console.log('[BUILD] Returning Unbundled Output');
+        return stream;
+    }
 };
 
 /*
@@ -149,19 +156,18 @@ gulp.task('serve', function () {
 });
 
 gulp.task('build', [], function (onComplete) {
-    console.log("Beginning Production Build");
+    console.log("[BUILD] Beginning Production Build");
     // Merge the streams
     var stream = gulp.getBuildStreams();
     // Pipe into build directory.
     console.log("[BUILD] Piping output");
     stream = stream.pipe(gulp.dest(BUILD_DIR));
-    console.log("[BUILD] Output Complete");
     // Once outputted into dist.
     gulp.waitFor(stream).then(function () {
         console.log("[BUILD] SW-Precaching");
         // generate a service worker!
         gulp.createServiceWorker(project, swPreCache, argv.bundled).then(function () {
-            console.log("Build Complete!");
+            console.log("[BUILD] Build Complete!");
             onComplete();
         });
     }, function (error){
