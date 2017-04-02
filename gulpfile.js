@@ -5,7 +5,6 @@
  */
 
 const BUILD_DIR = 'dist/';
-const SERVE_DIR = '.tmp/';
 
 /*
     Core Dependencies
@@ -52,14 +51,14 @@ var isWin = /^win/.test(process.platform);
     Build Functions
  */
 
-gulp.waitFor = stream => {
-    return new Promise((resolve, reject) => {
+gulp.waitFor = function (stream) {
+    return new Promise(function (resolve, reject) {
         stream.on('end', resolve);
         stream.on('error', reject);
     });
 };
 
-gulp.spawnCmd = command => {
+gulp.spawnCmd = function (command) {
     if (isWin){
         return command + ".cmd";
     } else {
@@ -67,16 +66,16 @@ gulp.spawnCmd = command => {
     }
 };
 
-gulp.copy = (src, dest) => {
+gulp.copy = function (src, dest) {
     return gulp.src(src, {base:"."})
         .pipe(gulp.dest(dest));
 };
-gulp.copyBase = (src, dest, base) => {
+gulp.copyBase = function (src, dest, base) {
     return gulp.src(src, {base: base})
         .pipe(gulp.dest(dest));
 };
 
-gulp.createServiceWorker = (project, swPreCache, bundled) => {
+gulp.createServiceWorker = function (project, swPreCache, bundled) {
     return addServiceWorker({
         project: project,
         buildRoot: BUILD_DIR,
@@ -85,7 +84,7 @@ gulp.createServiceWorker = (project, swPreCache, bundled) => {
     });
 };
 
-gulp.buildSources = sources => {
+gulp.buildSources = function (sources) {
     return sources
         .pipe(sourcesHtmlSplitter.split()) // split streams
         .pipe(sourcemaps.init()) // Start preparing sourcemaps
@@ -96,10 +95,11 @@ gulp.buildSources = sources => {
         .pipe(sourcesHtmlSplitter.rejoin());
 };
 
-gulp.getBuildStreams = () => {
+gulp.getBuildStreams = function () {
     //  Build our build sources & import our dependencies. Then merge the streams.
     var stream = mergeStream(gulp.buildSources(project.sources()), project.dependencies());
     // Build bundled, if --bundled
+    console.log('Bundling');
     return stream.pipe(gulpif(argv.bundled, project.bundler));
 };
 
@@ -107,7 +107,7 @@ gulp.getBuildStreams = () => {
     Shared Tasks
  */
 
-gulp.task('copy-temp', () => {
+gulp.task('copy-temp', function () {
     gulp.copy('test/**/*', '.tmp');
     gulp.copy('bower_components/**/*', '.tmp');
     // Merge the streams
@@ -115,21 +115,21 @@ gulp.task('copy-temp', () => {
     .pipe(gulp.dest(SERVE_DIR)); // Pipe into build directory.
 });
 
-gulp.task('test-exec', ['copy-temp'], onComplete => {
+gulp.task('test-exec', ['copy-temp'], function (onComplete) {
     gulp.copy('test/**/*', '.tmp');
     spawn(gulp.spawnCmd('polymer'), ['test'], { cwd: '.tmp/', stdio: 'inherit' })
-        .on('close', () => {
+        .on('close', function () {
             onComplete(null);
-        }).on('error', error => {
+        }).on('error', function (error) {
             onComplete(error);
         });
 });
 
-gulp.task('test', ['test-exec'], () => {
+gulp.task('test', ['test-exec'], function () {
     del(['.tmp/']);
 });
 
-gulp.task('clean', () => {
+gulp.task('clean', function () {
     del(['.tmp/']);
     del(['dist/']);
 });
@@ -138,36 +138,34 @@ gulp.task('clean', () => {
 /*
      Executable 'Complete' Tasks
  */
-gulp.task('serve', ['copy-temp'], () => {
+gulp.task('serve', function () {
     browserSync({
-        files: [".tmp/**/*"],
+        files: ["/**/*"],
         server: {
-            baseDir: ".tmp/",
+            baseDir: ".",
             middleware: [ historyApiFallback() ]
         }
     });
-    gulp.watch(['./src/**/*', './bower_components/**/*']).on('change', function () {
-        console.log("File-Changed, Updating.");
-        gulp.waitFor(mergeStream(gulp.buildSources(gulp.src(['src/**/*.{js,html}', '!bower_components/**/*'], {base: '.'})), project.dependencies())
-            .pipe(gulp.dest(SERVE_DIR))) // Pipe into build directory.
-            .then(() => {
-                console.log("Updated.");
-            });
-    });
 });
 
-gulp.task('build', [], onComplete => {
+gulp.task('build', [], function (onComplete) {
     console.log("Beginning Production Build");
     // Merge the streams
     var stream = gulp.getBuildStreams();
     // Pipe into build directory.
+    console.log("[BUILD] Piping output");
     stream = stream.pipe(gulp.dest(BUILD_DIR));
+    console.log("[BUILD] Output Complete");
     // Once outputted into dist.
-    gulp.waitFor(stream).then(() => {
+    gulp.waitFor(stream).then(function () {
+        console.log("[BUILD] SW-Precaching");
         // generate a service worker!
-        gulp.createServiceWorker(project, swPreCache, argv.bundled).then(() => {
+        gulp.createServiceWorker(project, swPreCache, argv.bundled).then(function () {
             console.log("Build Complete!");
             onComplete();
         });
+    }, function (error){
+      console.error(error);
+      console.error("[BUILD] Failed");
     });
 });
