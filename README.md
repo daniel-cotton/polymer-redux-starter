@@ -6,6 +6,14 @@ This template offers a starting point, based upon <a href="https://github.com/Po
 
 ### Using The Starter
 
+#### Dependencies
+
+All dependencies are managed via Bower and NPM. Please ensure you have both
+installed globally and run:
+
+    bower install
+    npm install
+
 #### Start the development server
 
 This command serves the app at `http://localhost:8080` and provides basic URL
@@ -13,23 +21,29 @@ routing for the app, in accordance with PSK V2:
 
     npm start
 
+This development mode serve does not transpile any ES2015, we simply serve
+the current directory via BrowserSync.
+
 #### Build
 
 This command performs a build of the app via Gulp, beginning with a Babel
-transpliation. Following this, the standard polymer-cli build runs which
-performs the below.
+transpliation of all project JavaScript.
 
-Polymer-CLI build runs a HTML, CSS, and JS minification on the application
-dependencies, and generates a service-worker.js file with code to pre-cache the
-dependencies based on the entrypoint and fragments specified in `polymer.json`.
-The minified files are output to the `build/unbundled` folder, and are suitable
-for serving from a HTTP/2+Push compatible server.
+The build will then optionally bundle any fragments with their dependencies.
+In addition, a service-worker.js file is generated to pre-cache the app's routes
+and fragments specified in `polymer.json`. The files are output to the
+`dist` folder.
 
-In addition the command also creates a fallback `build/bundled` folder,
+By default the below command will bundle the app output. This output is
 generated using fragment bundling, suitable for serving from non
 H2/push-compatible servers or to clients that do not support H2/Push.
 
     npm run build
+
+If you are running a H2/Push compatible server - simply run the below
+in order to recieve an un-bundled output.
+
+    npm run build:unbundled
 
 #### Run a clean of temporary and build files
 
