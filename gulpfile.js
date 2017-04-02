@@ -5,12 +5,11 @@
  */
 
 const BUILD_DIR = 'dist/';
-const SERVE_DIR = '.tmp/';
+const TEST_DIR = '.tmp/';
 /*
     Core Dependencies
  */
 var gulp = require('gulp');
-var spawn = require('child_process').spawn;
 var del = require('del');
 var gulpif = require('gulp-if');
 var argv = require('yargs').argv;
@@ -39,13 +38,16 @@ var addServiceWorker = polymerBuild.addServiceWorker;
 var sourcesHtmlSplitter = new HtmlSplitter();
 
 /*
+    Test Dependencies & setup
+ */
+require('web-component-tester').gulp.init(gulp, ['copy-temp']);
+
+/*
     Config
  */
 
 var swPreCache = require('./sw-precache-config.js');
 var project = new PolymerProject(require('./polymer.json'));
-
-var isWin = /^win/.test(process.platform);
 
 /*
     Build Functions
@@ -60,20 +62,8 @@ gulp.waitFor = function (stream) {
     });
 };
 
-gulp.spawnCmd = function (command) {
-    if (isWin){
-        return command + ".cmd";
-    } else {
-        return command;
-    }
-};
-
 gulp.copy = function (src, dest) {
     return gulp.src(src, {base:"."})
-        .pipe(gulp.dest(dest));
-};
-gulp.copyBase = function (src, dest, base) {
-    return gulp.src(src, {base: base})
         .pipe(gulp.dest(dest));
 };
 
@@ -115,30 +105,16 @@ gulp.getBuildStreams = function () {
  */
 
 gulp.task('copy-temp', function () {
-    gulp.copy('test/**/*', '.tmp');
-    gulp.copy('bower_components/**/*', '.tmp');
+    gulp.copy('test/**/*', TEST_DIR);
+    gulp.copy('bower_components/**/*', TEST_DIR);
     // Merge the streams
     return mergeStream(gulp.buildSources(project.sources()), project.dependencies())
-    .pipe(gulp.dest(SERVE_DIR)); // Pipe into build directory.
-});
-
-gulp.task('test-exec', ['copy-temp'], function (onComplete) {
-    gulp.copy('test/**/*', '.tmp');
-    spawn(gulp.spawnCmd('polymer'), ['test'], { cwd: '.tmp/', stdio: 'inherit' })
-        .on('close', function () {
-            onComplete(null);
-        }).on('error', function (error) {
-            onComplete(error);
-        });
-});
-
-gulp.task('test', ['test-exec'], function () {
-    del(['.tmp/']);
+    .pipe(gulp.dest(TEST_DIR)); // Pipe into build directory.
 });
 
 gulp.task('clean', function () {
-    del(['.tmp/']);
-    del(['dist/']);
+    del([TEST_DIR]);
+    del([BUILD_DIR]);
 });
 
 
